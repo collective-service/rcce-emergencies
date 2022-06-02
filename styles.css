@@ -1,0 +1,74 @@
+#map {
+    width: 100%;
+    height: 500px;
+    position: relative;
+}
+
+.zoom-controls {
+    position: absolute;
+    left: 45px;
+    top: 15px;
+    display: grid;
+    grid-gap: 5px;
+}
+
+.zoom-controls button {
+    width: 30px;
+    height: 30px;
+    font-size: 18px;
+    display: grid;
+    border-radius: 50% !important;
+    background: #204669;
+    opacity: .5;
+    color: #fff;
+    border: none;
+    user-select: none;
+    cursor: pointer;
+    box-sizing: border-box;
+}
+
+.zoom-controls button:active {
+    background: rgba(200, 200, 200, 0.8);
+}
+
+.zoom-controls button:focus {
+    outline: 0;
+}
+
+#countries path {
+    cursor: pointer;
+}
+
+#countries path.inactive {
+    cursor: default;
+}
+
+.d3-tip {
+    padding: 10px;
+    background-color: #fff;
+    background: rgba(255, 255, 255, 0.9);
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
+    border: 0px;
+    border-radius: 3px;
+    font-size: 14px;
+    color: #000;
+    transition: 0.3s opacity ease;
+    z-index: 100;
+    pointer-events: none;
+}
+
+.d3-tip h5 {
+    font-size: 15px;
+}
+
+.d3-tip ul {
+    margin: 0;
+}
+
+.map-tip {
+    position: absolute;
+}
+
+.hidden {
+    display: none;
+}
