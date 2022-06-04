@@ -1,5 +1,5 @@
 const geodataUrl = 'world.json';
-const reliefWebApiURL = 'https://api.reliefweb.int/v1/disasters?appname=rwint-user-0&profile=list&preset=latest&fields[include][]=description'; 
+const reliefWebApiURL = 'https://api.reliefweb.int/v1/disasters?appname=rwint-user-0&profile=list&preset=latest&fields[include][]=description';
 //https://api.reliefweb.int/v1/disasters?appname=rwint-user-0&profile=list&preset=latest&fields[include][]=description
 //https://api.reliefweb.int/v1/disasters?appname=rwint-user-0&profile=list&preset=latest&slim=1
 
@@ -36,10 +36,21 @@ function api_cleanedOngoingDisasters(apiData) {
             "iso3": fields.glide.split('-')[3],
             "emergency": fields.name,
             "types": [...fields.type],
-            "description": fields.description
+            "description": fields.description,
+            "x": 0,
+            "y": 0
         })
     });
     return dataArr;
+}
+
+function updateLatLon(iso3, x, y) {
+    emergenciesData.forEach(element => {
+        if (element.iso3 == iso3) {
+            element.x = x;
+            element.y = y;
+        }
+    });
 }
 
 const isMobile = $(window).width() < 767 ? true : false;
@@ -47,12 +58,12 @@ const isMobile = $(window).width() < 767 ? true : false;
 const viewportWidth = window.innerWidth;
 let currentZoom = 1;
 
-const mapFillColor = '#204669',
-    mapInactive = '#fff',
+const mapFillColor = '#FFB896', //00acee F9F871
+    mapInactive = '#6077B5',
     mapActive = '#D90368',
     hoverColor = '#D90368';
 
-let g, mapsvg, projection, width, height, zoom, path;
+let g, mapsvg, projection, width, height, zoom, path, maptip;
 let countriesISO3Arr = [];
 
 function initiateMap() {
@@ -67,7 +78,6 @@ function initiateMap() {
         .translate([width / 3.0, height / 1.9]);
 
     path = d3.geoPath().projection(projection);
-
     zoom = d3.zoom()
         .scaleExtent([1, 8])
         .on("zoom", zoomed);
@@ -83,15 +93,19 @@ function initiateMap() {
     mapsvg.append("rect")
         .attr("width", "100%")
         .attr("height", "100%")
-        // .attr("fill", "#99daea");
-        .attr("fill", "#d9d9d9");
+        // .attr("fill", "#d9d9d9");
+        .attr("fill", "#cdd4d9"); //294780
+    // .attr("fill-opacity", "0.5");
 
     emergenciesData.forEach(element => {
         countriesISO3Arr.includes(element.iso3) ? null : countriesISO3Arr.push(element.iso3);
     });
 
-    g = mapsvg.append("g").attr('id', 'countries')
-        .selectAll("path")
+    //map tooltips
+    maptip = d3.select('#map').append('div').attr('class', 'd3-tip map-tip hidden');
+
+    g = mapsvg.append("g"); //.attr('id', 'countries')
+    g.selectAll("path")
         .data(geomData.features)
         .enter()
         .append("path")
@@ -101,38 +115,57 @@ function initiateMap() {
         })
         .attr('class', function(d) {
             var className = (countriesISO3Arr.includes(d.properties.ISO_A3)) ? 'hasEmergency' : 'inactive';
+            if (className == 'hasEmergency') {
+                var centroid = path.centroid(d),
+                    x = centroid[0],
+                    y = centroid[1];
+                updateLatLon(d.properties.ISO_A3, x, y);
+            }
             return className;
         })
         .attr('fill', function(d) {
             return countriesISO3Arr.includes(d.properties.ISO_A3) ? mapFillColor : mapInactive;
         })
-        .attr('stroke-width', .2)
-        .attr('stroke', '#d9d9d9');
+        .attr('stroke-width', .8)
+        .attr('stroke', '#fff')
+        .on("mousemove", function(d) {
+            countriesISO3Arr.includes(d.properties.ISO_A3) ? mousemove(d) : null;
+        })
+        .on("mouseout", function(d) {
 
-        const tweetCountryData = [
-    {"key":"ZAF", "value":21},
-    {"key":"SOM", "value":61}
-];
-const rlog = d3.scaleLog()
-.domain([1, 3])
-.range([2, 20]);
+            maptip.classed('hidden', true);
+        })
+        .on("click", function(d) {
+            if (countriesISO3Arr.includes(d.properties.ISO_A3)) {
+                const countryInfo = emergenciesData.filter((c) => { return c.iso3 == d.properties.ISO_A3 })[0];
+                generateEmergencyInfo(countryInfo);
+            }
 
-     g.append("g")
-    .attr("class", "tweet-layer")
-    .selectAll(".tweet-marker")
-    .data(tweetCountryData)
-    .enter()
-      .append("g")
-      .append("circle")
-      .attr("class", "marker tweet-marker")
-      .attr("r", function (d){ return (d.value==0) ? 0 : rlog(d.value); })
+        });
+
+    const circles = g.append("g")
+        .attr("class", "cercles")
+        .selectAll(".cercle")
+        .data(emergenciesData)
+        .enter()
+        .append("g")
+        .append("circle")
+        .attr("class", "cercle")
+        .attr("r", 5)
+        .attr("transform", function(d) { return "translate(" + [d.x, d.y] + ")"; })
+        .on("mousemove", function(d) {
+            mousemove(d);
+        })
+        .on("mouseout", function() {
+            maptip.classed('hidden', true);
+        })
+        .on("click", function(d) {
+            generateEmergencyInfo(d);
+        });
 
     mapsvg.transition()
         .duration(750)
         .call(zoom.transform, d3.zoomIdentity);
-
-    //map tooltips
-    var maptip = d3.select('#map').append('div').attr('class', 'd3-tip map-tip hidden');
 
     //zoom controls
     d3.select("#zoom_in").on("click", function() {
@@ -142,45 +175,16 @@ const rlog = d3.scaleLog()
         zoom.scaleBy(mapsvg.transition().duration(500), 0.5);
     });
 
-
-    g.filter('.hasEmergency')
-        .on("mousemove", function(d) {
-            if (!$(this).hasClass('clicked')) {
-                $(this).attr('fill', hoverColor);
-            }
-
-            var mouse = d3.mouse(mapsvg.node()).map(function(d) { return parseInt(d); });
-            maptip
-                .classed('hidden', false)
-                .attr('style', 'left:' + (mouse[0]) + 'px; top:' + (mouse[1] + 25) + 'px')
-                .html(d.properties.NAME);
-
-        })
-        .on("mouseout", function(d) {
-            if (!$(this).hasClass('clicked')) {
-                $(this).attr('fill', mapFillColor);
-            }
-            maptip.classed('hidden', true);
-        })
-        .on("click", function(d){
-            const countryInfo = emergenciesData.filter((c) => { return c.iso3 == d.properties.ISO_A3 })[0];
-            generateEmergencyInfo(countryInfo);
-        });
-
 } //initiateMap
 
-
-function showMapTooltip(d, maptip, text) {
+function mousemove(d) {
+    let countryName = (d.hasOwnProperty('properties')) ? d.properties.NAME : d.country;
     var mouse = d3.mouse(mapsvg.node()).map(function(d) { return parseInt(d); });
     maptip
         .classed('hidden', false)
-        .attr('style', 'left:' + (mouse[0] + 20) + 'px;top:' + (mouse[1] + 20) + 'px')
-        .html(text)
-}
-
-function hideMapTooltip(maptip) {
-    maptip.classed('hidden', true)
-}
+        .attr('style', 'left:' + (mouse[0]) + 'px; top:' + (mouse[1] + 25) + 'px')
+        .html(countryName);
+} //mousemove
 
 // zoom on buttons click
 function zoomed() {
@@ -191,11 +195,12 @@ function zoomed() {
         g.attr("transform", transform);
         g.attr("stroke-width", 1 / transform.k);
 
+        // updateCerclesMarkers()
     }
 }
 
 function generateEmergencyInfo(filteredData) {
-    const text = "<h6>" + filteredData.emergency + "</h6>"+
+    const text = "<h6>" + filteredData.emergency + "</h6>" +
         filteredData.description;
 
     $("#emergency_desc").html(text);

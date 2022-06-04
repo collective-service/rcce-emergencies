@@ -1,5 +1,3 @@
-
-
 .emergency {
     right: 10px;
     top: 10px;
@@ -8,12 +6,18 @@
     width: 560px;
     height: 400px;
     overflow-y: auto;
-
+    padding: 10px;
 }
 
 #emergency_desc {
-    font-size: 0.75rem;
-    line-height: 1.3rem;
+    font-size: 1.1em;
+    line-height: 1.2em;
+    font-weight: 300;
+    color: #294780;
+}
+
+#emergency_desc h6 {
+    font-weight: bold;
 }
 
 #map {
@@ -53,11 +57,11 @@
     outline: 0;
 }
 
-#countries path {
+svg g path {
     cursor: pointer;
 }
 
-#countries path.inactive {
+svg g path path.inactive {
     cursor: default;
 }
 
@@ -91,16 +95,22 @@
     display: none;
 }
 
+.cercle {
+    /* fill-opacity: 0.5; */
+    fill: #D90368;
+    stroke: #D90368;
+}
+
 @media only screen and (max-width: 767px) {
-    .row{
+    .row {
         flex-direction: column-reverse;
     }
-    .emergency{
+    .emergency {
         position: static;
         /* top: 0; */
         width: 100%;
     }
-    #map{
+    #map {
         height: 400px;
     }
 }
