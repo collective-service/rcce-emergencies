@@ -58,8 +58,8 @@ const isMobile = $(window).width() < 767 ? true : false;
 const viewportWidth = window.innerWidth;
 let currentZoom = 1;
 
-const mapFillColor = '#FFB896', //00acee F9F871
-    mapInactive = '#6077B5',
+const mapFillColor = '#001e3f', //00acee F9F871 294780 6077B5 001e3f
+    mapInactive = '#001e3f',
     mapActive = '#D90368',
     hoverColor = '#D90368';
 
@@ -94,7 +94,7 @@ function initiateMap() {
         .attr("width", "100%")
         .attr("height", "100%")
         // .attr("fill", "#d9d9d9");
-        .attr("fill", "#cdd4d9"); //294780
+        .attr("fill", "#1b365e"); //294780 //1b365e //cdd4d9
     // .attr("fill-opacity", "0.5");
 
     emergenciesData.forEach(element => {
@@ -126,7 +126,7 @@ function initiateMap() {
         .attr('fill', function(d) {
             return countriesISO3Arr.includes(d.properties.ISO_A3) ? mapFillColor : mapInactive;
         })
-        .attr('stroke-width', .8)
+        .attr('stroke-width', 0)
         .attr('stroke', '#fff')
         .on("mousemove", function(d) {
             countriesISO3Arr.includes(d.properties.ISO_A3) ? mousemove(d) : null;
@@ -179,11 +179,12 @@ function initiateMap() {
 
 function mousemove(d) {
     let countryName = (d.hasOwnProperty('properties')) ? d.properties.NAME : d.country;
-    var mouse = d3.mouse(mapsvg.node()).map(function(d) { return parseInt(d); });
+    const html = countryName +
+        '<br>' + "(click for more info)";
     maptip
         .classed('hidden', false)
-        .attr('style', 'left:' + (mouse[0]) + 'px; top:' + (mouse[1] + 25) + 'px')
-        .html(countryName);
+        .attr('style', 'left:' + (d3.event.pageX + 10) + 'px; top:' + (d3.event.pageY) + 'px')
+        .html(html);
 } //mousemove
 
 // zoom on buttons click

@@ -13,11 +13,13 @@
     font-size: 1.1em;
     line-height: 1.2em;
     font-weight: 300;
-    color: #294780;
+    color: #fff;
 }
 
 #emergency_desc h6 {
+    font-size: 1.2em;
     font-weight: bold;
+    color: #EE3224;
 }
 
 #map {
@@ -41,7 +43,6 @@
     display: grid;
     border-radius: 50% !important;
     background: #204669;
-    opacity: .5;
     color: #fff;
     border: none;
     user-select: none;
@@ -57,12 +58,17 @@
     outline: 0;
 }
 
-svg g path {
+
+/* svg g path {
     cursor: pointer;
-}
+} */
 
 svg g path path.inactive {
     cursor: default;
+}
+
+circle {
+    cursor: pointer;
 }
 
 .d3-tip {
