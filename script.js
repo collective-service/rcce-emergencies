@@ -154,7 +154,7 @@ function initiateMap() {
             }
 
         });
-
+    const circlesR = 6;
     const circles = g.append("g")
         .attr("class", "cercles")
         .selectAll(".cercle")
@@ -163,7 +163,7 @@ function initiateMap() {
         .append("g")
         .append("circle")
         .attr("class", "cercle")
-        .attr("r", 6)
+        .attr("r", circlesR)
         .attr("transform", function(d) { return "translate(" + [d.x, d.y] + ")"; })
         .attr("fill", function(d) { return getColor(d.type_main); })
         .on("mousemove", function(d) {
@@ -174,6 +174,8 @@ function initiateMap() {
         })
         .on("click", function(d) {
             generateEmergencyInfo(d);
+            g.selectAll("circle").attr('r', circlesR);
+            $(this).attr('r', circlesR * 2);
         });
 
     mapsvg.transition()
