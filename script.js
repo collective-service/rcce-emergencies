@@ -81,13 +81,13 @@ let countriesISO3Arr = [];
 function initiateMap() {
     width = document.getElementById("mainOfIframe").offsetWidth; //viewportWidth;
     height = (isMobile) ? 400 : 500;
-    var mapScale = (isMobile) ? width / 5.5 : width / 7.2;
+    var mapScale = (isMobile) ? width / 5.5 : width / 10.1;
     var mapCenter = (isMobile) ? [12, 12] : [25, 25];
 
     projection = d3.geoMercator()
         .center(mapCenter)
         .scale(mapScale)
-        .translate([width / 3.7, height / 1.9]);
+        .translate([width / 2.1, height / 1.9]);
 
     path = d3.geoPath().projection(projection);
     zoom = d3.zoom()
@@ -154,7 +154,7 @@ function initiateMap() {
             }
 
         });
-    const circlesR = 6;
+    const circlesR = 7;
     const circles = g.append("g")
         .attr("class", "cercles")
         .selectAll(".cercle")
