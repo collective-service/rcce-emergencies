@@ -23,8 +23,6 @@ $(document).ready(function() {
             colorsMappingArr.forEach(element => {
                 legendEntries.includes(element["Legend item"]) ? null : legendEntries.push(element["Legend item"]);
             });
-            console.log(legendEntries);
-            console.log(emergenciesData);
             initiateMap();
             //remove loader and show vis
             $('.loader').hide();
@@ -81,7 +79,7 @@ let g, mapsvg, projection, width, height, zoom, path, maptip;
 let countriesISO3Arr = [];
 
 function initiateMap() {
-    width = document.getElementById("main").offsetWidth; //viewportWidth;
+    width = document.getElementById("mainOfIframe").offsetWidth; //viewportWidth;
     height = (isMobile) ? 400 : 500;
     var mapScale = (isMobile) ? width / 5.5 : width / 7.2;
     var mapCenter = (isMobile) ? [12, 12] : [25, 25];
@@ -105,7 +103,7 @@ function initiateMap() {
         .on("dblclick.zoom", null);
 
     mapsvg.append("rect")
-        .attr("width", width)
+        .attr("width", "100%")
         .attr("height", "100%")
         // .attr("fill", "#d9d9d9");
         .attr("fill", "#1b365e"); //294780 //1b365e //cdd4d9
