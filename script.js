@@ -2,24 +2,48 @@ const geodataUrl = 'world.json';
 const reliefWebApiURL = 'https://api.reliefweb.int/v1/disasters?appname=rwint-user-0&profile=list&preset=latest&fields[include][]=description';
 //https://api.reliefweb.int/v1/disasters?appname=rwint-user-0&profile=list&preset=latest&fields[include][]=description
 //https://api.reliefweb.int/v1/disasters?appname=rwint-user-0&profile=list&preset=latest&slim=1
+const api_setup_url = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTO4an4g3FxrhfbVptaxEB3GL7Gr3h3NMJOzZVyaJPslsFuXGJqYvQVkiawcXE6jXdi_uOB14cMQJxY/pub?gid=2020692436&single=true&output=csv';
 const colorsMappingURL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTO4an4g3FxrhfbVptaxEB3GL7Gr3h3NMJOzZVyaJPslsFuXGJqYvQVkiawcXE6jXdi_uOB14cMQJxY/pub?gid=0&single=true&output=csv';
 
 let geomData,
     emergenciesData,
     colorsMappingArr;
 let legendEntries = [];
+
+// Api parameters
+const limit = 200;
+let api_start_date = new Date("2022-01-01");
+let api_excludes_emergencies = [];
+let allCountriesList = [];
+
 $(document).ready(function() {
     function getData() {
         Promise.all([
             d3.json(geodataUrl),
-            d3.json(reliefWebApiURL),
-            d3.csv(colorsMappingURL)
+            d3.json(reliefWebApiURL + "&limit=" + limit),
+            d3.csv(colorsMappingURL),
+            d3.csv(api_setup_url)
         ]).then(function(data) {
             geomData = topojson.feature(data[0], data[0].objects.geom);
 
-            emergenciesData = api_cleanedOngoingDisasters(data[1].data);
+            data[3].forEach(setup => {
+                const val = setup.value;
+                if (setup.key == "api_start_date") {
+                    if (val != undefined) {
+                        api_start_date = new Date(val);
+                    }
+                }
 
+                if (setup.key == "api_excludes_emergencies" && val != "") {
+                    exArr.forEach(ele => {
+                        api_excludes_emergencies.includes(ele) ? null :
+                            api_excludes_emergencies.push(ele);
+                    });
+                }
+            });
+            emergenciesData = api_cleanedOngoingDisasters(data[1].data);
             colorsMappingArr = data[2];
+
             colorsMappingArr.forEach(element => {
                 legendEntries.includes(element["Legend item"]) ? null : legendEntries.push(element["Legend item"]);
             });
@@ -33,26 +57,57 @@ $(document).ready(function() {
     getData();
 });
 
+function setDepth(iso3) {
+    var depth = 0;
+    if (!allCountriesList.includes(iso3)) {
+        return 0;
+    } else {
+        console.log("on doit calculer pour :" + iso3)
+        var count = 0;
+        allCountriesList.forEach(ctry => {
+            ctry == iso3 ? count += 1 : null;
+        });
+        depth = count;
+    }
+    return depth;
+}
+
 function api_cleanedOngoingDisasters(apiData) {
     let dataArr = []; // id , countryname, iso3, name_emergencies, type=[]
+    var api_types_Arr = [];
+    // console.log(apiData)
     apiData.forEach(element => {
-        const fields = element["fields"];
-        var types = [];
-        fields.type.forEach(t => {
-            types.push(t.name);
-        })
-        dataArr.push({
-            "id": element.id,
-            "country": fields.country[0].name,
-            "iso3": fields.glide.split('-')[3],
-            "emergency": fields.name,
-            "types": types,
-            "type_main": fields.type[0].name,
-            "description": fields.description,
-            "x": 0,
-            "y": 0
-        })
+        // var tArr = element["fields"].type;
+        // tArr.forEach(tpe => {
+        //     api_types_Arr.includes(tpe.name) ? "" : api_types_Arr.push(tpe.name);
+        // });
+        // console.log(api_types_Arr)
+
+        if (element["fields"].status != "past" && api_start_date <= new Date(element["fields"].date.created) && !api_excludes_emergencies.includes(element["fields"].name)) {
+            // console.log(element)
+            const fields = element["fields"];
+            var types = [];
+            fields.type.forEach(t => {
+                types.push(t.name);
+            })
+            dataArr.push({
+                "id": element.id,
+                "status": fields.status,
+                "date": new Date(fields.date.created),
+                "country": fields.country[0].name,
+                "iso3": fields.glide.split('-')[3],
+                "emergency": fields.name,
+                "types": types,
+                "type_main": fields.type[0].name,
+                "description": fields.description,
+                "x": 0,
+                "y": 0,
+                "depth": setDepth(fields.glide.split('-')[3])
+            })
+            allCountriesList.push(fields.glide.split('-')[3]);
+        }
     });
+    // console.log(dataArr)
     return dataArr;
 }
 
@@ -164,7 +219,15 @@ function initiateMap() {
         .append("circle")
         .attr("class", "cercle")
         .attr("r", circlesR)
-        .attr("transform", function(d) { return "translate(" + [d.x, d.y] + ")"; })
+        .attr("transform", function(d) {
+            // console.log(d)
+            // if (d.id = "51018") {
+            //     const xx = 0.1;
+            //     const yy = 100;
+            //     return "translate(" + [d.x + xx, d.y + yy] + ")";
+            // }
+            return "translate(" + [d.x, d.y] + ")";
+        })
         .attr("fill", function(d) { return getColor(d.type_main); })
         .on("mousemove", function(d) {
             mousemove(d);
