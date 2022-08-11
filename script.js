@@ -63,6 +63,7 @@ $(document).ready(function() {
             $('.loader').hide();
             $('#mainOfIframe').css('opacity', 1);
 
+
             initiateMap();
         }); // then
     } // getData
@@ -220,6 +221,8 @@ function initiateMap() {
         // .attr("fill", "#d9d9d9");
         .attr("fill", "#1b365e"); //294780 //1b365e //cdd4d9
     // .attr("fill-opacity", "0.5");
+
+    d3.select('#title').style('right', width / 2 + 'px');
 
     emergenciesData.forEach(element => {
         countriesISO3Arr.includes(element.iso3) ? null : countriesISO3Arr.push(element.iso3);

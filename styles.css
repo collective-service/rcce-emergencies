@@ -52,6 +52,24 @@ body {
     }
 }
 
+#title {
+    top: 10px;
+    position: absolute;
+    z-index: 2;
+    color: #fff;
+    font-size: 1.9em;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+#title p {
+    font-size: 0.5em;
+    font-weight: 200;
+    font-style: italic;
+    padding-left: 20px;
+    text-transform: none;
+}
+
 .emergency {
     right: 20px;
     top: 30px;
