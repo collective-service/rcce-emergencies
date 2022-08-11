@@ -4,14 +4,17 @@ const reliefWebApiURL = 'https://api.reliefweb.int/v1/disasters?appname=rwint-us
 //https://api.reliefweb.int/v1/disasters?appname=rwint-user-0&profile=list&preset=latest&slim=1
 const api_setup_url = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTO4an4g3FxrhfbVptaxEB3GL7Gr3h3NMJOzZVyaJPslsFuXGJqYvQVkiawcXE6jXdi_uOB14cMQJxY/pub?gid=2020692436&single=true&output=csv';
 const colorsMappingURL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTO4an4g3FxrhfbVptaxEB3GL7Gr3h3NMJOzZVyaJPslsFuXGJqYvQVkiawcXE6jXdi_uOB14cMQJxY/pub?gid=0&single=true&output=csv';
+const countriesListURL = 'https://raw.githubusercontent.com/collective-service/cs-kobo-scraper/main/data/countries_list_iso.csv';
 
 let geomData,
     emergenciesData,
-    colorsMappingArr;
-let legendEntries = [];
+    colorsMappingArr,
+    countriesISO3Dict;
+let legendEntries = [],
+    worldwideLegendArr = [];
 
 // Api parameters
-const limit = 200;
+const limit = 150;
 let api_start_date = new Date("2022-01-01");
 let api_excludes_emergencies = [];
 let allCountriesList = [];
@@ -22,10 +25,11 @@ $(document).ready(function() {
             d3.json(geodataUrl),
             d3.json(reliefWebApiURL + "&limit=" + limit),
             d3.csv(colorsMappingURL),
-            d3.csv(api_setup_url)
+            d3.csv(api_setup_url),
+            d3.csv(countriesListURL)
         ]).then(function(data) {
             geomData = topojson.feature(data[0], data[0].objects.geom);
-
+            var exArr = [];
             data[3].forEach(setup => {
                 const val = setup.value;
                 if (setup.key == "api_start_date") {
@@ -35,22 +39,31 @@ $(document).ready(function() {
                 }
 
                 if (setup.key == "api_excludes_emergencies" && val != "") {
+                    exArr = val.split(',');
                     exArr.forEach(ele => {
                         api_excludes_emergencies.includes(ele) ? null :
                             api_excludes_emergencies.push(ele);
                     });
                 }
+                if (setup.key == "legend_worldwide") {
+                    worldwideLegendArr.push(val)
+                }
             });
+            countriesISO3Dict = data[4];
+
             emergenciesData = api_cleanedOngoingDisasters(data[1].data);
+
             colorsMappingArr = data[2];
 
             colorsMappingArr.forEach(element => {
                 legendEntries.includes(element["Legend item"]) ? null : legendEntries.push(element["Legend item"]);
             });
-            initiateMap();
+
             //remove loader and show vis
             $('.loader').hide();
             $('#main').css('opacity', 1);
+
+            initiateMap();
         }); // then
     } // getData
 
@@ -62,7 +75,6 @@ function setDepth(iso3) {
     if (!allCountriesList.includes(iso3)) {
         return 0;
     } else {
-        console.log("on doit calculer pour :" + iso3)
         var count = 0;
         allCountriesList.forEach(ctry => {
             ctry == iso3 ? count += 1 : null;
@@ -71,6 +83,22 @@ function setDepth(iso3) {
     }
     return depth;
 }
+
+function getCountryISO3(country_name) {
+    var cleanedName = country_name.split('(')[0].trim();
+    for (let index = 0; index < countriesISO3Dict.length; index++) {
+        const element = countriesISO3Dict[index];
+        if (element.NAME == cleanedName) {
+            return element.ISO3;
+            break;
+        } else {
+            if (element.FULL_NAME.includes(country_name)) {
+                return element.ISO3;
+                break;
+            }
+        }
+    }
+} //getCountryISO3
 
 function api_cleanedOngoingDisasters(apiData) {
     let dataArr = []; // id , countryname, iso3, name_emergencies, type=[]
@@ -90,21 +118,45 @@ function api_cleanedOngoingDisasters(apiData) {
             fields.type.forEach(t => {
                 types.push(t.name);
             })
-            dataArr.push({
-                "id": element.id,
-                "status": fields.status,
-                "date": new Date(fields.date.created),
-                "country": fields.country[0].name,
-                "iso3": fields.glide.split('-')[3],
-                "emergency": fields.name,
-                "types": types,
-                "type_main": fields.type[0].name,
-                "description": fields.description,
-                "x": 0,
-                "y": 0,
-                "depth": setDepth(fields.glide.split('-')[3])
-            })
-            allCountriesList.push(fields.glide.split('-')[3]);
+            cntriesArr = fields.country;
+            if (cntriesArr.length == 1) {
+                const iso3 = getCountryISO3(fields.country[0].name);
+                dataArr.push({
+                    "id": element.id,
+                    "status": fields.status,
+                    "date": new Date(fields.date.created),
+                    "country": fields.country[0].name,
+                    "iso3": iso3, //fields.glide.split('-')[3],
+                    "emergency": fields.name,
+                    "types": types,
+                    "type_main": fields.type[0].name,
+                    "description": fields.description,
+                    "x": 0,
+                    "y": 0,
+                    "depth": setDepth(iso3)
+                })
+                allCountriesList.push(fields.glide.split('-')[3]);
+            } else {
+                cntriesArr.forEach(item => {
+                    const iso3 = getCountryISO3(item.name);
+                    emer = fields.name.split(':')[1];
+                    dataArr.push({
+                        "id": element.id,
+                        "status": fields.status,
+                        "date": new Date(fields.date.created),
+                        "country": item.name,
+                        "iso3": iso3,
+                        "emergency": fields.name, //fields.name,item.name + ": " + emer
+                        "types": types,
+                        "type_main": fields.type[0].name,
+                        "description": fields.description,
+                        "x": 0,
+                        "y": 0,
+                        "depth": setDepth(iso3)
+                    })
+                });
+                allCountriesList.push(fields.glide.split('-')[3]);
+            }
         }
     });
     // console.log(dataArr)
@@ -112,12 +164,18 @@ function api_cleanedOngoingDisasters(apiData) {
 }
 
 function updateLatLon(iso3, x, y) {
-    emergenciesData.forEach(element => {
+    for (let index = 0; index < emergenciesData.length; index++) {
+        const element = emergenciesData[index];
         if (element.iso3 == iso3) {
+            if (element.depth != 0) {
+                console.log("should move this one");
+            }
             element.x = x;
             element.y = y;
+            break;
         }
-    });
+    }
+
 }
 
 const isMobile = $(window).width() < 767 ? true : false;
@@ -138,7 +196,6 @@ function initiateMap() {
     height = (isMobile) ? 400 : 500;
     var mapScale = (isMobile) ? width / 5.5 : width / 10.1;
     var mapCenter = (isMobile) ? [12, 12] : [25, 25];
-
     projection = d3.geoMercator()
         .center(mapCenter)
         .scale(mapScale)
@@ -209,6 +266,11 @@ function initiateMap() {
             }
 
         });
+
+    //filter the data
+    emergenciesData = emergenciesData.filter(function(d) {
+        return d.x != 0 && d.y != 0;
+    });
     const circlesR = 7;
     const circles = g.append("g")
         .attr("class", "cercles")
@@ -256,6 +318,13 @@ function initiateMap() {
     var legendSVG = d3.select('#legend').append("svg")
         .attr("widht", "100%")
         .attr("height", "100%");
+
+    d3.select('#worldwide').style("left", width / 2 + "px");
+
+    var worldwideSVG = d3.select('#worldwide').append("svg")
+        .attr("widht", "100%")
+        .attr("height", "100%");
+
     const xcoord = 10;
     legendSVG.append("g")
         .selectAll("legend-item")
@@ -283,6 +352,43 @@ function initiateMap() {
             return xcoord + 5 + i * 25;
         })
         .text(function(d) { return d; });
+
+    // worldwideSVG
+    //     .select("g")
+    //     .selectAll("text")
+    //     // .data(worldwideLegendArr).enter()
+    //     .append("text")
+    //     .attr("x", 30)
+    //     .attr("y", 10)
+    //     .text("WorldWide");
+
+    // worldwideSVG.append("g")
+    //     .selectAll("legend-item")
+    //     .data(worldwideLegendArr)
+    //     .enter()
+    //     .append("circle").attr("r", 6)
+    //     .attr("cx", xcoord)
+    //     .attr("cy", function(d, i) {
+    //         if (i == 0) {
+    //             return xcoord;
+    //         }
+    //         return xcoord + i * 25;
+    //     })
+    //     .attr("fill", function(legend) { return getColor("Epidemic"); });
+
+    // worldwideSVG
+    //     .select("g")
+    //     .selectAll("text")
+    //     .data(worldwideLegendArr).enter()
+    //     .append("text")
+    //     .attr("x", xcoord * 2)
+    //     .attr("y", function(d, i) {
+    //         if (i == 0) {
+    //             return xcoord + 5;
+    //         }
+    //         return xcoord + 5 + i * 25;
+    //     })
+    //     .text(function(d) { return d; });
 } //initiateMap
 
 function mousemove(d) {
@@ -342,11 +448,14 @@ function getColumnUniqueValues() {
 } //getColumnUniqueValues
 
 function getColor(type) {
-    var color = '#fff'
-    colorsMappingArr.forEach(element => {
+    var color = ""; //'#C3C3C3'
+    for (let index = 0; index < colorsMappingArr.length; index++) {
+        const element = colorsMappingArr[index];
         if (element["RW type"].includes(type)) {
             color = element.Color;
+            break;
         }
-    });
+    }
+
     return color;
 }
