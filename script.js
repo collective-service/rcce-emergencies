@@ -159,7 +159,7 @@ function api_cleanedOngoingDisasters(apiData) {
             }
         }
     });
-    // console.log(dataArr)
+    console.log(dataArr)
     return dataArr;
 }
 
@@ -194,8 +194,8 @@ let countriesISO3Arr = [];
 function initiateMap() {
     width = document.getElementById("mainOfIframe").offsetWidth; //viewportWidth;
     height = (isMobile) ? 400 : 500;
-    var mapScale = (isMobile) ? width / 5.5 : width / 10.1;
-    var mapCenter = (isMobile) ? [12, 12] : [25, 25];
+    var mapScale = (isMobile) ? width / 5.2 : width / 10.1;
+    var mapCenter = (isMobile) ? [12, 25] : [25, 25];
     projection = d3.geoMercator()
         .center(mapCenter)
         .scale(mapScale)
@@ -271,7 +271,7 @@ function initiateMap() {
     emergenciesData = emergenciesData.filter(function(d) {
         return d.x != 0 && d.y != 0;
     });
-    const circlesR = 7;
+    const circlesR = (isMobile) ? 5 : 7;
     const circles = g.append("g")
         .attr("class", "cercles")
         .selectAll(".cercle")
