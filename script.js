@@ -159,7 +159,7 @@ function api_cleanedOngoingDisasters(apiData) {
             }
         }
     });
-    console.log(dataArr)
+    // console.log(dataArr)
     return dataArr;
 }
 
@@ -319,7 +319,7 @@ function initiateMap() {
         .attr("widht", "100%")
         .attr("height", "100%");
 
-    d3.select('#worldwide').style("left", width / 2 + "px");
+    d3.select('#worldwide').style("bottom", height / 2 + "px");
 
     var worldwideSVG = d3.select('#worldwide').append("svg")
         .attr("widht", "100%")
@@ -362,33 +362,33 @@ function initiateMap() {
     //     .attr("y", 10)
     //     .text("WorldWide");
 
-    // worldwideSVG.append("g")
-    //     .selectAll("legend-item")
-    //     .data(worldwideLegendArr)
-    //     .enter()
-    //     .append("circle").attr("r", 6)
-    //     .attr("cx", xcoord)
-    //     .attr("cy", function(d, i) {
-    //         if (i == 0) {
-    //             return xcoord;
-    //         }
-    //         return xcoord + i * 25;
-    //     })
-    //     .attr("fill", function(legend) { return getColor("Epidemic"); });
+    worldwideSVG.append("g")
+        .selectAll("legend-item")
+        .data(worldwideLegendArr)
+        .enter()
+        .append("circle").attr("r", 6)
+        .attr("cx", xcoord)
+        .attr("cy", function(d, i) {
+            if (i == 0) {
+                return xcoord;
+            }
+            return xcoord + i * 25;
+        })
+        .attr("fill", function(legend) { return getColor("Epidemic"); });
 
-    // worldwideSVG
-    //     .select("g")
-    //     .selectAll("text")
-    //     .data(worldwideLegendArr).enter()
-    //     .append("text")
-    //     .attr("x", xcoord * 2)
-    //     .attr("y", function(d, i) {
-    //         if (i == 0) {
-    //             return xcoord + 5;
-    //         }
-    //         return xcoord + 5 + i * 25;
-    //     })
-    //     .text(function(d) { return d; });
+    worldwideSVG
+        .select("g")
+        .selectAll("text")
+        .data(worldwideLegendArr).enter()
+        .append("text")
+        .attr("x", xcoord * 2)
+        .attr("y", function(d, i) {
+            if (i == 0) {
+                return xcoord + 5;
+            }
+            return xcoord + 5 + i * 25;
+        })
+        .text(function(d) { return d; });
 } //initiateMap
 
 function mousemove(d) {

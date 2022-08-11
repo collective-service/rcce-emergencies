@@ -126,10 +126,19 @@ body {
 
 #worldwide {
     position: absolute;
-    /* left: 45px; */
-    bottom: 10px;
-    /* width: 105px; */
+    left: 45px;
+    /* bottom: 10px; */
+    width: 120px;
     height: 80px;
+    display: flex;
+    flex-direction: column;
+    /* font-size: 0.8em; */
+}
+
+#worldwide span {
+    color: #fff;
+    border-bottom: 1px solid;
+    margin-bottom: 5px;
 }
 
 
@@ -194,12 +203,16 @@ circle {
     #map {
         height: 400px;
     }
-    #legend {
+    #legend,
+    #worldwide {
         left: 15px;
     }
     #legend svg g text,
     #worldwide svg g text {
         fill: #fff;
         font-size: 0.6em;
+    }
+    #worldwide span {
+        font-size: 0.7em;
     }
 }
