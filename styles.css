@@ -12,6 +12,10 @@ body {
     transform: translate(-50%, -50%);
 }
 
+#mainOfIframe {
+    opacity: 0;
+}
+
 .sp {
     clear: both;
     height: 32px;

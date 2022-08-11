@@ -61,7 +61,7 @@ $(document).ready(function() {
 
             //remove loader and show vis
             $('.loader').hide();
-            $('#main').css('opacity', 1);
+            $('#mainOfIframe').css('opacity', 1);
 
             initiateMap();
         }); // then
