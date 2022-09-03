@@ -52,7 +52,6 @@ $(document).ready(function() {
             countriesISO3Dict = data[4];
 
             emergenciesData = api_cleanedOngoingDisasters(data[1].data);
-
             colorsMappingArr = data[2];
 
             colorsMappingArr.forEach(element => {
@@ -86,19 +85,21 @@ function setDepth(iso3) {
 }
 
 function getCountryISO3(country_name) {
+    var iso3;
     var cleanedName = country_name.split('(')[0].trim();
     for (let index = 0; index < countriesISO3Dict.length; index++) {
         const element = countriesISO3Dict[index];
-        if (element.NAME == cleanedName) {
-            return element.ISO3;
-            break;
-        } else {
-            if (element.FULL_NAME.includes(country_name)) {
-                return element.ISO3;
-                break;
-            }
+
+        if (element.NAME == cleanedName || element.FULL_NAME.includes(country_name)) {
+            iso3 = element.ISO3;
         }
     }
+    if (iso3 == undefined) {
+        //fetch from googlesheet
+        country_name == "Lao People's Democratic Republic (the)" ? iso3 = "LAO" :
+            country_name == "Réunion (France)" ? iso3 = "FRA" : null;
+    }
+    return iso3;
 } //getCountryISO3
 
 function api_cleanedOngoingDisasters(apiData) {
@@ -106,11 +107,6 @@ function api_cleanedOngoingDisasters(apiData) {
     var api_types_Arr = [];
     // console.log(apiData)
     apiData.forEach(element => {
-        // var tArr = element["fields"].type;
-        // tArr.forEach(tpe => {
-        //     api_types_Arr.includes(tpe.name) ? "" : api_types_Arr.push(tpe.name);
-        // });
-        // console.log(api_types_Arr)
 
         if (element["fields"].status != "past" && api_start_date <= new Date(element["fields"].date.created) && !api_excludes_emergencies.includes(element["fields"].name)) {
             // console.log(element)
@@ -122,6 +118,7 @@ function api_cleanedOngoingDisasters(apiData) {
             cntriesArr = fields.country;
             if (cntriesArr.length == 1) {
                 const iso3 = getCountryISO3(fields.country[0].name);
+                iso3 == undefined ? console.log("iso3 not found for ", fields.country[0].name) : null;
                 dataArr.push({
                     "id": element.id,
                     "status": fields.status,
@@ -140,6 +137,7 @@ function api_cleanedOngoingDisasters(apiData) {
             } else {
                 cntriesArr.forEach(item => {
                     const iso3 = getCountryISO3(item.name);
+                    iso3 == undefined ? console.log("iso3 not found for ", item) : null;
                     emer = fields.name.split(':')[1];
                     dataArr.push({
                         "id": element.id,
@@ -169,7 +167,7 @@ function updateLatLon(iso3, x, y) {
         const element = emergenciesData[index];
         if (element.iso3 == iso3) {
             if (element.depth != 0) {
-                console.log("should move this one");
+                // console.log("should move this one");
             }
             element.x = x;
             element.y = y;
